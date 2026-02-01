@@ -1,1 +1,190 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Home, CheckSquare, GraduationCap, Calendar as CalendarIcon, 
+  Settings, Plus, Trash2, Copy, LogOut, Check, 
+  ShoppingBag, ChevronLeft, Trash 
+} from 'lucide-react';
+
+const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
+  const v = {
+    primary: "bg-indigo-600 text-white shadow-md",
+    secondary: "bg-white text-indigo-600 border border-indigo-100",
+    danger: "bg-red-50 text-red-600",
+    ghost: "bg-transparent text-gray-400"
+  };
+  return (
+    <button 
+      disabled={disabled} 
+      onClick={onClick} 
+      className={`px-4 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 transition-all ${v[variant]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Input = ({ label, ...props }) => (
+  <div className="mb-4 w-full text-left">
+    {label && <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">{label}</label>}
+    <input {...props} className="w-full px-4 py-4 rounded-2xl border border-gray-100 focus:border-indigo-500 outline-none bg-gray-50 text-gray-800" />
+  </div>
+);
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [items, setItems] = useState([
+    { id: 1, title: 'Comprar Leite e Ovos', type: 'shopping', completed: false },
+    { id: 2, title: 'Trabalho de História', type: 'education', completed: false },
+    { id: 3, title: 'Arrumar a cozinha', type: 'routine', completed: true }
+  ]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newItem, setNewItem] = useState({ type: 'routine', title: '', date: '' });
+
+  const toggleItem = (id) => {
+    setItems(items.map(item => item.id === id ? { ...item, completed: !item.completed } : item));
+  };
+
+  const deleteItem = (id) => {
+    setItems(items.filter(item => item.id !== id));
+  };
+
+  const handleAddItem = () => {
+    if (!newItem.title.trim()) return;
+    const item = {
+      id: Date.now(),
+      ...newItem,
+      completed: false
+    };
+    setItems([item, ...items]);
+    setNewItem({ type: 'routine', title: '', date: '' });
+    setShowAddModal(false);
+  };
+
+  const filteredItems = activeTab === 'dashboard' 
+    ? items 
+    : items.filter(i => i.type === (activeTab === 'calendar' ? 'event' : activeTab));
+
+  return (
+    <div className="min-h-screen bg-white text-gray-800 flex flex-col max-w-md mx-auto relative font-sans">
+      {/* Header */}
+      <header className="px-6 pt-12 pb-6 flex justify-between items-center bg-white sticky top-0 z-30 border-b border-gray-50">
+        <div className="text-left">
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Família Silva</h2>
+          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+            {items.filter(i => !i.completed).length} Tarefas Pendentes
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => { 
+              setNewItem(prev => ({ ...prev, type: activeTab === 'dashboard' ? 'routine' : activeTab }));
+              setShowAddModal(true); 
+            }} 
+            className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100 active:scale-90 transition-transform"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        </div>
+      </header>
+
+      {/* Main List */}
+      <main className="flex-1 px-5 pt-6 pb-32 overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            {activeTab === 'dashboard' ? 'Resumo de Hoje' : activeTab}
+          </h3>
+        </div>
+
+        <div className="space-y-4">
+          {filteredItems.map(item => (
+            <div 
+              key={item.id} 
+              className={`bg-gray-50 p-5 rounded-[2rem] border border-transparent flex items-center gap-4 transition-all ${item.completed ? 'opacity-40 grayscale' : 'hover:border-indigo-100'}`}
+            >
+              <button 
+                onClick={() => toggleItem(item.id)} 
+                className={`w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${item.completed ? 'bg-indigo-600 border-indigo-600' : 'border-gray-200 bg-white'}`}
+              >
+                {item.completed && <Check className="w-4 h-4 text-white" />}
+              </button>
+              <div className="flex-1 text-left">
+                <p className={`text-sm font-bold ${item.completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                  {item.title}
+                </p>
+                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">
+                  {item.type}
+                </span>
+              </div>
+              <button onClick={() => deleteItem(item.id)} className="text-gray-300 p-2">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+
+          {filteredItems.length === 0 && (
+            <div className="py-20 text-center flex flex-col items-center opacity-20">
+              <CheckSquare className="w-12 h-12 mb-2" />
+              <p className="font-black text-[10px] uppercase tracking-widest">Tudo limpo!</p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-lg border-t border-gray-100 px-2 pt-4 pb-10 flex justify-around items-center z-40">
+        {[
+          { id: 'dashboard', icon: Home, label: 'Início' },
+          { id: 'routine', icon: CheckSquare, label: 'Rotina' },
+          { id: 'shopping', icon: ShoppingBag, label: 'Compras' },
+          { id: 'education', icon: GraduationCap, label: 'Escola' }
+        ].map(t => (
+          <button 
+            key={t.id} 
+            onClick={() => setActiveTab(t.id)} 
+            className={`flex flex-col items-center gap-1.5 p-2 transition-all ${activeTab === t.id ? 'text-indigo-600 scale-110' : 'text-gray-300'}`}
+          >
+            <t.icon className="w-5 h-5" />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">{t.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end p-4">
+          <div className="bg-white w-full rounded-[2.5rem] p-8 pb-12 shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <div className="w-12 h-1.5 bg-gray-100 rounded-full mx-auto mb-8" />
+            <h3 className="text-xl font-black mb-6 text-gray-900">Adicionar Tarefa</h3>
+            
+            <div className="flex gap-2 overflow-x-auto pb-6 mb-2 no-scrollbar">
+              {['routine', 'shopping', 'education'].map(t => (
+                <button 
+                  key={t} 
+                  onClick={() => setNewItem({...newItem, type: t})} 
+                  className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all ${newItem.type === t ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400'}`}
+                >
+                  {t === 'routine' ? 'Rotina' : t === 'shopping' ? 'Compras' : 'Escola'}
+                </button>
+              ))}
+            </div>
+
+            <Input 
+              label="O que precisas fazer?" 
+              value={newItem.title} 
+              onChange={e => setNewItem({...newItem, title: e.target.value})} 
+              placeholder="Ex: Comprar pão..." 
+              autoFocus 
+            />
+            
+            <div className="flex gap-3 mt-6">
+              <Button variant="ghost" onClick={() => setShowAddModal(false)} className="flex-1">Cancelar</Button>
+              <Button onClick={handleAddItem} className="flex-1" disabled={!newItem.title.trim()}>Confirmar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
